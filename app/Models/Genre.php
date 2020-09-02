@@ -18,4 +18,7 @@ class Genre extends Model
 
     protected $keyType = 'string';
 
+    protected $casts = [
+        'is_active' => 'boolean',
+    ];
 }
