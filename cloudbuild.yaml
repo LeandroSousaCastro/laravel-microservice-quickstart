@@ -22,11 +22,11 @@ steps:
 
 - id: "Rodando key:generate"
   name: 'gcr.io/cloud-builders/docker'
-  args: ['exec', '-t', 'app', 'php', '/var/www/artisan', 'key:genarate']
+  args: ['exec', '-t', 'app', 'php', '/var/www/artisan', 'key:generate']
 
 - id: "Rodando migrations"
   name: 'gcr.io/cloud-builders/docker'
-  args: ['exec', '-t', 'app', 'php', '/var/www/artisan', 'key:genarate']
+  args: ['exec', '-t', 'app', 'php', '/var/www/artisan', 'migrate']
 
 - id: "Rodando PhpUnit"
   name: 'gcr.io/cloud-builders/docker'
