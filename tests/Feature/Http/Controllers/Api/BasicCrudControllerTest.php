@@ -1,4 +1,4 @@
-    <?php
+<?php
 
 namespace Tests\Feature\Http\Controllers\Api;
 

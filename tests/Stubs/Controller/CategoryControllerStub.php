@@ -18,8 +18,6 @@ class CategoryControllerStub extends BasicCrudController
             'description' => 'nullable'
         ];
     }
-<<<<<<< HEAD
-=======
 
     protected function rulesUpdate()
     {        
@@ -28,5 +26,4 @@ class CategoryControllerStub extends BasicCrudController
             'description' => 'nullable'
         ];
     }
->>>>>>> fcc71328817e032523043451b42e1170186bbd28
 }
