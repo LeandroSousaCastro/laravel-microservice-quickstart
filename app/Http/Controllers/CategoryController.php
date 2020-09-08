@@ -5,45 +5,27 @@ namespace App\Http\Controllers;
 use App\Models\Category;
 use Illuminate\Http\Request;
 
-class CategoryController extends Controller
+class CategoryController extends BasicCrudController
 {
 
     private $rules = [
         'name' => 'required|max:255',
+        'description' => 'nullable',
         'is_active' => 'boolean'
     ];
 
-    public function index(Request $request) //?only_trashed (dados removidos)
+    protected function model()
     {
-        if ($request->has('only_trashed')) {
-            return Category::withTrashed()->get();
-        }
-        return Category::all();
+        return Category::class;
+    }
+    
+    protected function rulesStore()
+    {
+        return $this->rules;
     }
 
-    public function store(Request $request)
+    protected function rulesUpdate()
     {
-        $this->validate($request, $this->rules);
-        $category = Category::create($request->all());
-        $category->refresh();
-        return $category;
-    }
-
-    public function show(Category $category)
-    {
-        return $category;
-    }
-
-    public function update(Request $request, Category $category)
-    {
-        $this->validate($request, $this->rules);
-        $category->update($request->all());
-        return $category;
-    }
-
-    public function destroy(Category $category)
-    {
-        $category->delete();
-        return response()->noContent();
+        return $this->rules;
     }
 }
