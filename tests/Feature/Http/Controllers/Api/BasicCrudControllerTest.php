@@ -1,14 +1,10 @@
-<?php
+    <?php
 
 namespace Tests\Feature\Http\Controllers\Api;
 
-<<<<<<< HEAD
-
-=======
 use App\Http\Controllers\BasicCrudController;
 use App\Models\Category;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
->>>>>>> fcc71328817e032523043451b42e1170186bbd28
 use Tests\TestCase;
 
 use Illuminate\Http\Request;
@@ -48,10 +44,6 @@ class BasicCrudControllerTest extends TestCase
     public function testInvalidationDataInStore()
     {
         $this->expectException(ValidationException::class);
-<<<<<<< HEAD
-=======
-
->>>>>>> fcc71328817e032523043451b42e1170186bbd28
         //Mockery PHP
         $request = \Mockery::mock(Request::class);
         $request
@@ -75,8 +67,6 @@ class BasicCrudControllerTest extends TestCase
             $obj->toArray()
         );
     }
-<<<<<<< HEAD
-=======
 
     //Testando metodos protegidos - ReflectionClass acessa e altera as propriedades das classes.
     public function testIfFindOrFailFetchModel()
@@ -141,5 +131,4 @@ class BasicCrudControllerTest extends TestCase
             ->assertStatus(204);
         $this->assertCount(0, CategoryStub::all());
     }
->>>>>>> fcc71328817e032523043451b42e1170186bbd28
 }

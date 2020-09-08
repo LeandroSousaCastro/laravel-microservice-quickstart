@@ -12,11 +12,8 @@ abstract class BasicCrudController extends Controller
 
     protected abstract function rulesStore();
 
-<<<<<<< HEAD
-=======
     protected abstract function rulesUpdate();
 
->>>>>>> fcc71328817e032523043451b42e1170186bbd28
     public function index()
     {
         return $this->model()::all();
@@ -30,33 +27,6 @@ abstract class BasicCrudController extends Controller
         return $obj;
     }
 
-<<<<<<< HEAD
-    // public function store(Request $request)
-    // {
-    //     $this->validate($request, $this->rules);
-    //     $category = Category::create($request->all());
-    //     $category->refresh();
-    //     return $category;
-    // }
-
-    // public function show(Category $category)
-    // {
-    //     return $category;
-    // }
-
-    // public function update(Request $request, Category $category)
-    // {
-    //     $this->validate($request, $this->rules);
-    //     $category->update($request->all());
-    //     return $category;
-    // }
-
-    // public function destroy(Category $category)
-    // {
-    //     $category->delete();
-    //     return response()->noContent();
-    // }
-=======
     protected function findOrFail($id)
     {
         $model = $this->model();
@@ -84,5 +54,4 @@ abstract class BasicCrudController extends Controller
         $obj->delete();
         return response()->noContent();
     }
->>>>>>> fcc71328817e032523043451b42e1170186bbd28
 }
