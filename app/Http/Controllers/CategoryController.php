@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\Category;
-use Illuminate\Http\Request;
 
 class CategoryController extends BasicCrudController
 {
@@ -18,7 +17,7 @@ class CategoryController extends BasicCrudController
     {
         return Category::class;
     }
-    
+
     protected function rulesStore()
     {
         return $this->rules;

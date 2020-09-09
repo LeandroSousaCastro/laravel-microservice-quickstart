@@ -2,19 +2,20 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Genre;
+use App\Models\Video;
 
-class GenreController extends BasicCrudController
+class VideoController extends BasicCrudController
 {
+    private $rules;
 
-    private $rules = [
-        'name' => 'required|max:255',
-        'is_active' => 'boolean'
-    ];
+    public function __construct()
+    {
+
+    }
 
     protected function model()
     {
-        return Genre::class;
+        return Video::class;
     }
 
     protected function rulesStore()
