@@ -5,7 +5,6 @@ namespace Tests\Feature\Http\Controllers\Api;
 use App\Models\CastMember;
 use Illuminate\Foundation\Testing\DatabaseMigrations;
 use Tests\TestCase;
-use Illuminate\Foundation\Testing\TestResponse;
 use Tests\Traits\TestSaves;
 use Tests\Traits\TestValidations;
 
@@ -14,17 +13,21 @@ class CastMemberControllerTest extends TestCase
     use DatabaseMigrations, TestValidations, TestSaves;
 
     private $castMember;
+    private $sendData;
 
     protected function setUp(): void
     {
         parent::setUp();
-        $this->castMember = factory(CastMember::class)->create([
-            'type' => CastMember::TYPE_DIRECTOR
-        ]);
+        $this->castMember = factory(CastMember::class)->create();
+        $this->sendData = [
+            'name' => 'Title',
+            'type' => CastMember::TYPE_ACTOR,
+        ];
     }
 
     public function testIndex()
     {
+
         $response = $this->get(route('cast_members.index'));
 
         $response
@@ -41,54 +44,58 @@ class CastMemberControllerTest extends TestCase
             ->assertJson($this->castMember->toArray());
     }
 
-    public function testInvalidationData()
+    public function testInvalidationRequired()
     {
         $data = [
-            'name' => '', //Para ficar claro que  o teste referece a validação do campo name vazio.
-            'type' => ''
+            'name' => '',
+            'type' => '',
         ];
         $this->assertInvalidationInStoreAction($data, 'required');
         $this->assertInvalidationInUpdateAction($data, 'required');
-
-        $data = [
-            'type' => 's'
-        ];
-        $this->assertInvalidationInStoreAction($data, 'in');
-        $this->assertInvalidationInUpdateAction($data, 'in');
-
     }
 
-    public function testStore()
+    public function testInvalidationMax()
     {
         $data = [
+            'name' => str_repeat('a', 256)
+        ];
+        $this->assertInvalidationInStoreAction($data, 'max.string', ['max' => 255]);
+        $this->assertInvalidationInUpdateAction($data, 'max.string', ['max' => 255]);
+    }
+
+    public function testSave()
+    {
+
+        $data = [
             [
-                'name' => 'Teste',
-                'type' => CastMember::TYPE_DIRECTOR
+                'send_data' => $this->sendData,
+                'test_data' => $this->sendData,
             ],
             [
-                'name' => 'Teste',
-                'type' => CastMember::TYPE_ACTOR
+                'send_data' => $this->sendData + ['type' => CastMember::TYPE_DIRECTOR],
+                'test_data' => $this->sendData + ['type' => CastMember::TYPE_DIRECTOR],
             ]
         ];
 
-        foreach ($data as $value) {
-            $response = $this->assertStore($value, $value + ['deleted_at' => null]);
+        foreach ($data as $key => $value) {
+            $response = $this->assertStore(
+                $value['send_data'],
+                $value['test_data'] + ['deleted_at' => null]
+            );
+
+            $response->assertJsonStructure([
+                'created_at', 'updated_at'
+            ]);            
+
+            $response = $this->assertUpdate(
+                $value['send_data'],
+                $value['test_data'] + ['deleted_at' => null]
+            );
+
             $response->assertJsonStructure([
                 'created_at', 'updated_at'
             ]);
         }
-    }
-
-    public function testUpdate()
-    {
-        $data = [
-            'name' => 'Teste',
-            'type' => CastMember::TYPE_ACTOR
-        ];
-        $response = $this->assertUpdate($data, $data + ['deleted_at' => null]);
-        $response->assertJsonStructure([
-            'created_at', 'updated_at'
-        ]);
     }
 
     public function testDestroy()
@@ -114,3 +121,4 @@ class CastMemberControllerTest extends TestCase
         return CastMember::class;
     }
 }
+

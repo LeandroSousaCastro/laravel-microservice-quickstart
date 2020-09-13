@@ -25,10 +25,18 @@ class Video extends Model
 
     protected $casts = [
         'id' => 'string',
-        'year_launched' => 'boolean',
-        'opened' => 'integer',
+        'year_launched' => 'integer',
+        'opened' => 'boolean',
         'duration' => 'integer',
     ];
 
     public $incrementing = false;
+
+    public function categories() {
+        return $this->belongsToMany(Category::class);
+    }
+
+    public function genres() {
+        return $this->belongsToMany(Genre::class);
+    }
 }

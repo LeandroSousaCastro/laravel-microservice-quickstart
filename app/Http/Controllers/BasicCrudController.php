@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Category;
 use Illuminate\Http\Request;
 
 abstract class BasicCrudController extends Controller
@@ -43,8 +42,8 @@ abstract class BasicCrudController extends Controller
     public function update(Request $request, $id)
     {
         $obj = $this->findOrFail($id);
-        $this->validate($request, $this->rulesUpdate());
-        $obj->update($request->all());
+        $validateData = $this->validate($request, $this->rulesUpdate());
+        $obj->update($validateData);
         return $obj;
     }
 
