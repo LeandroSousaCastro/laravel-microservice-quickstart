@@ -2,14 +2,17 @@
 
 namespace Tests\Feature\Http\Controllers\Api;
 
+use App\Http\Controllers\GenreController;
+use App\Models\Category;
 use App\Models\Genre;
 use Illuminate\Foundation\Testing\DatabaseMigrations;
 use Tests\TestCase;
-use Illuminate\Foundation\Testing\WithFaker;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Foundation\Testing\TestResponse;
 use Tests\Traits\TestSaves;
 use Tests\Traits\TestValidations;
+use Mockery;
+use Tests\Exceptions\TestException;
+use Illuminate\Http\Request;
 
 class GenreControllerTest extends TestCase
 {
@@ -44,7 +47,8 @@ class GenreControllerTest extends TestCase
     public function testInvalidationData()
     {
         $data = [
-            'name' => '' //Para ficar claro que  o teste referece a validação do campo name vazio.
+            'name' => '', //Para ficar claro que  o teste referece a validação do campo name vazio.
+            'categories_id' => ''
         ];
         $this->assertInvalidationInStoreAction($data, 'required');
         $this->assertInvalidationInUpdateAction($data, 'required');
@@ -60,6 +64,26 @@ class GenreControllerTest extends TestCase
         ];
         $this->assertInvalidationInStoreAction($data, 'boolean');
         $this->assertInvalidationInUpdateAction($data, 'boolean');
+
+        $data = [
+            'categories_id' => 'a'
+        ];
+        $this->assertInvalidationInStoreAction($data, 'array');
+        $this->assertInvalidationInUpdateAction($data, 'array');
+
+        $data = [
+            'categories_id' => [100]
+        ];
+        $this->assertInvalidationInStoreAction($data, 'exists');
+        $this->assertInvalidationInUpdateAction($data, 'exists');
+
+        // $category = factory(Category::class)->create();
+        // $category->delete();
+        // $data = [
+        //     'categories_id' => [$category->id]
+        // ];
+        // $this->assertInvalidationInStoreAction($data, 'exists');
+        // $this->assertInvalidationInUpdateAction($data, 'exists');
 
     }
 
@@ -82,41 +106,127 @@ class GenreControllerTest extends TestCase
 
     public function testStore()
     {
+        $categoryId = factory(Category::class)->create()->id;
         $data = [
             'name' => 'Teste'
         ];
-        $response = $this->assertStore($data, $data + [
-            'is_active' => true,
-            'deleted_at' => null
-        ]);
+        $response = $this->assertStore(
+            $data + ['categories_id' => [$categoryId]],
+            $data + ['is_active' => true, 'deleted_at' => null]
+        );
         $response->assertJsonStructure([
             'created_at', 'updated_at'
         ]);
+        $this->assertHasCategory($response->json('id'), $categoryId);
 
         $data = [
             'name' => 'Teste',
             'is_active' => false
         ];
-        $this->assertStore($data, $data + [
-            'name' => 'Teste',
-            'is_active' => false
-        ]);
+        $this->assertStore(
+            $data + ['categories_id' => [$categoryId]],
+            $data + ['is_active' => false]
+        );
     }
 
     public function testUpdate()
     {
+        $categoryId = factory(Category::class)->create()->id;
         $data = [
             'name' => 'Teste',
             'is_active' => true
         ];
-        $response = $this->assertUpdate($data, $data + ['deleted_at' => null]);
+        $response = $this->assertUpdate(
+            $data + ['categories_id' => [$categoryId]],
+            $data + ['deleted_at' => null]
+        );
         $response->assertJsonStructure([
-            'created_at', 'updated_at'
+            'created_at',
+            'updated_at'
         ]);
+        $this->assertHasCategory($response->json('id'), $categoryId);
+              
+    }
 
-        $data = [
-            'name' => 'Teste',
-        ];        
+    public function testRollbackStore()
+    {
+        $controller = Mockery::mock(GenreController::class)
+            ->makePartial()
+            ->shouldAllowMockingProtectedMethods();
+
+        $controller
+            ->shouldReceive('validate')
+            ->withAnyArgs()
+            ->andReturn([
+                'name' => 'Teste'
+            ]);
+
+        $controller
+            ->shouldReceive('rulesStore')
+            ->withAnyArgs()
+            ->andReturn([]);
+
+        $controller->shouldReceive('handleRelations')
+            ->once()
+            ->andThrow(new TestException());
+
+        $request = Mockery::mock(Request::class);
+
+        $hasError = false;
+        try {            
+            $controller->store($request);
+        } catch (TestException $e) {
+            $this->assertCount(1, Genre::all());
+            $hasError = true;
+        }
+        $this->assertTrue($hasError);
+    }
+
+    public function testRollbackUpdate()
+    {
+        $controller = Mockery::mock(GenreController::class)
+            ->makePartial()
+            ->shouldAllowMockingProtectedMethods();
+
+        $controller
+            ->shouldReceive('findOrFail')
+            ->withAnyArgs()
+            ->andReturn($this->genre);
+
+        $controller
+            ->shouldReceive('validate')
+            ->withAnyArgs()
+            ->andReturn([
+                'name' => 'Teste'
+            ]);
+
+        $controller
+            ->shouldReceive('rulesStore')
+            ->withAnyArgs()
+            ->andReturn([]);
+
+        $controller->shouldReceive('handleRelations')
+            ->once()
+            ->andThrow(new TestException());
+
+        $request = Mockery::mock(Request::class);
+
+        $hasError = false;
+        try {            
+            $controller->update($request, $this->genre->id);
+        } catch (TestException $e) {
+            $this->assertCount(1, Genre::all());
+            $hasError = true;
+        }
+        $this->assertTrue($hasError);
+    }
+
+    protected function assertHasCategory($genreId, $categoryId)
+    {
+        $this->assertDatabaseHas('category_genre', [
+            'genre_id' => $genreId,
+            'category_id' => $categoryId
+        ]);
     }
 
     public function testDestroy()
