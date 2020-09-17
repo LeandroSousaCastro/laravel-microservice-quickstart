@@ -19,6 +19,7 @@ trait TestValidations
         string $rule,
         array $ruleParams = []
     ) {
+
         $response->assertStatus(422)
             ->assertJsonValidationErrors($fields);
 

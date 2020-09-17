@@ -8,15 +8,17 @@ use App\Models\Genre;
 use App\Models\Video;
 use Illuminate\Foundation\Testing\DatabaseMigrations;
 use Illuminate\Http\Request;
+use Illuminate\Http\UploadedFile;
 use Mockery;
 use Tests\TestCase;
 use Tests\Traits\TestSaves;
 use Tests\Traits\TestValidations;
 use Tests\Exceptions\TestException;
+use Tests\Traits\TestUploads;
 
 class VideoControllerTest extends TestCase
 {
-    use DatabaseMigrations, TestValidations, TestSaves;
+    use DatabaseMigrations, TestValidations, TestSaves, TestUploads;
 
     private $video;
     private $sendData;
@@ -119,6 +121,72 @@ class VideoControllerTest extends TestCase
         ];
         $this->assertInvalidationInStoreAction($data, 'in');
         $this->assertInvalidationInUpdateAction($data, 'in');
+    }
+
+    // public function testInvalidationVideoField() {
+    //     $this->assertInvalidationFile(
+    //         'video_file',
+    //         'mp4',
+    //          12,
+    //         'mimetypes', ['values' => 'video/mp4']
+    //     );
+    // }
+
+    public function testSaveWithFiles()
+    {
+        \Storage::fake();
+        $files = $this->getFiles();
+
+        $category = factory(Category::class)->create();
+        $genre = factory(Genre::class)->create();
+        $genre->categories()->sync($category->id);
+
+        $response = $this->json(
+            'POST',
+            $this->routeStore(),
+            $this->sendData + 
+            [
+                'categories_id' => [$category->id],
+                'genres_id' => [$genre->id],
+            ] +
+            $files
+        );
+
+        $response->assertStatus(201);
+        $id = $response->json('id');
+        foreach ($files as $file) {
+            \Storage::assertExists("{$id}/{$file->hashName()}");
+        }
+    }
+
+    public function testUpdateWithFiles()
+    {
+        \Storage::fake();
+        $video = factory(Video::class)->create();
+        $thumbFile = UploadedFile::fake()->image('thumb.jpg');
+        $videoFile = UploadedFile::fake()->create('video.mp4');
+        $video->update($this->sendData + [
+            'thumb_file' => $thumbFile,
+            'video_file' => $videoFile,
+        ]);
+        \Storage::assertExists("{$video->id}/{$video->thumb_file}");
+        \Storage::assertExists("{$video->id}/{$video->video_file}");
+
+        $newVideoFile = UploadedFile::fake()->image('video.mp4');
+        $video->update($this->sendData + [
+            'video_file' => $newVideoFile,
+        ]);
+        \Storage::assertExists("{$video->id}/{$thumbFile->hashName()}");
+        \Storage::assertExists("{$video->id}/{$newVideoFile->hashName()}");
+        \Storage::assertMissing("{$video->id}/{$videoFile->hashName()}");
+   
+    }
+
+    protected function getFiles()
+    {
+        return [
+            'video_file' => UploadedFile::fake()->create("video_file.mp4")
+        ];
     }
 
     public function testSave()

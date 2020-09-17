@@ -1,6 +1,6 @@
 <?php
 
-namespace Tests\Unit\Models\Traits;
+namespace Tests\Prod\Models\Traits;
 
 use App\Models\Genre;
 use App\Models\Traits\Uuid;
@@ -8,29 +8,33 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Http\UploadedFile;
 use Tests\Stubs\Models\UploadFileStub;
 use Tests\TestCase;
+use Tests\Traits\TestProd;
+use Tests\Traits\TestStorages;
 
-class UploadFileUnitTest extends TestCase
+class UploadFileProdTest extends TestCase
 {
+    use TestStorages, TestProd;
 
     private $obj;
 
     protected function setUp(): void
     {
         parent::setUp();
+        $this->skipTestIfNotProd();
         $this->obj = new UploadFileStub();
+        \Config::set('filesystems.default', 'gcs');
+        $this->deleteAllFiles();
     }
 
     public function testUploadFile()
     {
-        \Storage::fake();
         $file = UploadedFile::fake()->create('video.mp4');
         $this->obj->uploadFile($file);
         \Storage::assertExists("1/{$file->hashName()}");
     }
 
     public function testUploadFiles()
-    {
-        \Storage::fake();
+    {        
         $file1 = UploadedFile::fake()->create('video1.mp4');
         $file2 = UploadedFile::fake()->create('video2.mp4');
         $this->obj->uploadFiles([$file1, $file2]);
@@ -39,8 +43,7 @@ class UploadFileUnitTest extends TestCase
     }
 
     public function testDeleteOldFile()
-    {
-        \Storage::fake();
+    {        
         $file1 = UploadedFile::fake()->create('video1.mp4')->size(1);
         $file2 = UploadedFile::fake()->create('video2.mp4')->size(1);
         $this->obj->uploadFiles([$file1, $file2]);
@@ -54,8 +57,7 @@ class UploadFileUnitTest extends TestCase
     }
 
     public function testDeleteFile()
-    {
-        \Storage::fake();
+    {        
         $file = UploadedFile::fake()->create('video.mp4');
         $this->obj->uploadFile($file);
         $fileName = $file->hashName();
@@ -69,8 +71,7 @@ class UploadFileUnitTest extends TestCase
     }
 
     public function testDeleteFiles()
-    {
-        \Storage::fake();
+    {        
         $file1 = UploadedFile::fake()->create('video1.mp4');
         $file2 = UploadedFile::fake()->create('video2.mp4');
         $this->obj->uploadFiles([$file1, $file2]);
