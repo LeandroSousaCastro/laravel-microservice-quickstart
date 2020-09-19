@@ -3,9 +3,12 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\ResourceCollection;
 
 abstract class BasicCrudController extends Controller
 {
+
+    protected $paginateSize = 15;
 
     protected abstract function model();
 
@@ -13,17 +16,27 @@ abstract class BasicCrudController extends Controller
 
     protected abstract function rulesUpdate();
 
+    protected abstract function resource();
+
+    protected abstract function resourceCollection();
+
     public function index()
     {
-        return $this->model()::all();
+        $data = !$this->paginateSize ? $this->model()::all() : $this->model()::paginate($this->paginateSize);
+        $resourceCollectionClass = $this->resourceCollection();
+        $refClass = new \ReflectionClass($resourceCollectionClass);
+        return $refClass->isSubclassOf(ResourceCollection::class)
+            ? new $resourceCollectionClass($data) 
+            : $resourceCollectionClass::collection($data);
     }
 
     public function store(Request $request)
     {
         $validateData = $this->validate($request, $this->rulesStore());
-        $obj = $this->model()::create($validateData);
+        $obj = $this->model()::create($validateData);      
         $obj->refresh();
-        return $obj;
+        $resource = $this->resource();  
+        return new $resource($obj);
     }
 
     protected function findOrFail($id)
@@ -36,7 +49,8 @@ abstract class BasicCrudController extends Controller
     public function show($id)
     {
         $obj = $this->findOrFail($id);
-        return $obj;
+        $resource = $this->resource();  
+        return new $resource($obj);
     }
 
     public function update(Request $request, $id)
@@ -44,7 +58,8 @@ abstract class BasicCrudController extends Controller
         $obj = $this->findOrFail($id);
         $validateData = $this->validate($request, $this->rulesUpdate());
         $obj->update($validateData);
-        return $obj;
+        $resource = $this->resource();  
+        return new $resource($obj);
     }
 
     public function destroy($id)
