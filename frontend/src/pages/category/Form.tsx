@@ -50,7 +50,6 @@ export const Form = () => {
                 inputRef={register}
                 error={errors.name !== undefined}
                 helperText={errors.name && errors.name.message}
-                InputLabelProps={{shrink: true}}
 
             />
             <TextField
@@ -72,7 +71,6 @@ export const Form = () => {
             <Box dir={'rtl'}>
                 <Button 
                     color={"primary"}
-
                     {...buttonProps} onClick={() => onSubmit(getValues(), null)}
                 >
                     Salvar
